@@ -1,0 +1,371 @@
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import math
+import pylab
+
+
+def reward(s):
+    if s[1] == 0 or s[1] == 5 or s[2] == 0 or s[2] == 5:
+        value = -100
+    elif s[1] == 1 or s[2] == 1:
+        value = 0
+    elif s[1] == 2 or s[1] == 4:
+        value = -10
+    elif s[1] == 3 and s[2] == 4:
+        value = 1
+    else:
+        value = 0
+    return value
+
+
+def reward2(s):
+    if s[1] == 0 or s[1] == 5 or s[2] == 0 or s[2] == 5:
+        value = -100
+    elif s[1] == 1 or s[2] == 1:
+        value = 0
+    elif s[1] == 2 or s[1] == 4:
+        value = -10
+    elif s[1] == 3 and s[2] == 4:
+        if s[3] == 5 or s[3] == 6 or s[3] == 7:
+            value = 1
+    else:
+        value = 0
+    return value
+
+
+def initpolii(s):
+    h = 0
+    goal = [3, 4, h]
+    xerror = goal[1] - s[1]
+    yerror = goal[2] - s[2]
+    angled = ((np.arctan(yerror, xerror)) * 360) / (2 * math.pi)
+    hangle = 90 - s(3) * 30
+    herror = (angled - hangle) % 360
+    if (abs(xerror) + abs(yerror)) == 0:
+        a = "N"
+    elif herror <= 90 or herror >= 270:
+        s = nexts(0, s, "F")
+        xerror = goal[1] - s[1]
+        yerror = goal[2] - s[2]
+        angled = ((np.arctan(yerror, xerror)) * 360) / (2 * math.pi)
+        hangle = 90 - s[3] * 30
+        herror = (angled - hangle) % 360
+        if ((herror <= 15) or (herror >= 345)) or ((herror >= 165) and (herror <= 195)):
+            a = "F"
+        elif ((herror > 15) and (herror <= 90)) or ((herror > 195) and (herror < 270)):
+            a = "FL"
+        elif ((herror >= 270) and (herror < 345)) or ((herror > 90) and (herror < 165)):
+            a = "FR"
+    else:
+        s = nexts(0, s, "B")
+        xerror = goal[1] - s[1]
+        yerror = goal[2] - s[2]
+        angled = ((np.arctan(yerror, xerror)) * 360) / (2 * math.pi)
+        hangle = 90 - s[3] * 30
+        herror = (angled - hangle) % 360
+        if ((herror <= 15) or (herror >= 345)) or ((herror >= 165) and (herror <= 195)):
+            a = "B"
+        elif ((herror > 15) and (herror <= 90)) or ((herror > 195) and (herror < 270)):
+            a = "BL"
+        elif ((herror >= 270) and (herror < 345)) or ((herror > 90) and (herror < 165)):
+            a = "BR"
+    return a
+
+
+def transprobb(pe, s, a, sprime):
+    a = a.lower()
+    x = s[1]
+    y = s[2]
+    h = s[3]
+    xnew = [x, x, x]
+    ynew = [y, y, y]
+    hnew = [h, h, h]
+    p = [0, 0, 0]
+    sasprime = 0
+    if a == "n":
+        hnew = [(h - 1) % 12, h % 12, (h - 2) % 12]
+        p = [1 - 2 * pe, pe, pe]
+    elif a == "fr" or a == "br":
+        hnew = [(h + 1) % 12, (h + 2) % 12, h % 12]
+        p = [1 - 2 * pe, pe, pe]
+    elif a == "f" or a == "b":
+        hnew = [h % 12, (h + 1) % 12, (h - 1) % 12]
+        p = [1 - 2 * pe, pe, pe]
+    if a == "f" or a == "fl" or a == "fr":
+        if h == 0:
+            xnew = [x, x, x]
+            ynew = [y + 1, y + 1, y + 1]
+        elif h == 1:
+            xnew = [x, x + 1, x]
+            ynew = [y + 1, y, y + 1]
+        elif h == 2:
+            xnew = [x + 1, x + 1, x]
+            ynew = [y, y, y + 1]
+        elif h == 3:
+            xnew = [x + 1, x + 1, x + 1]
+            ynew = [y, y, y]
+        elif h == 4:
+            xnew = [x + 1, x, x + 1]
+            ynew = [y, y - 1, y]
+        elif h == 5:
+            xnew = [x, x, x + 1]
+            ynew = [y - 1, y - 1, y]
+        elif h == 6:
+            xnew = [x, x, x]
+            ynew = [y - 1, y - 1, y - 1]
+        elif h == 7:
+            xnew = [x, x - 1, x]
+            ynew = [y - 1, y, y - 1]
+        elif h == 8:
+            xnew = [x - 1, x - 1, x]
+            ynew = [y, y, y - 1]
+        elif h == 9:
+            xnew = [x - 1, x - 1, x - 1]
+            ynew = [y, y, y]
+        elif h == 10:
+            xnew = [x - 1, x, x - 1]
+            ynew = [y, y + 1, y]
+        elif h == 11:
+            xnew = [x, x, x - 1]
+            ynew = [y + 1, y + 1, y]
+    elif a == "b" or a == "bl" or a == "br":
+        if h == 0:
+            xnew = [x, x, x]
+            ynew = [y - 1, y - 1, y - 1]
+        elif h == 1:
+            xnew = [x, x - 1, x]
+            ynew = [y - 1, y, y - 1]
+        elif h == 2:
+            xnew = [x - 1, x - 1, x]
+            ynew = [y, y, y - 1]
+        elif h == 3:
+            xnew = [x - 1, x - 1, x - 1]
+            ynew = [y, y, y]
+        elif h == 4:
+            xnew = [x - 1, x, x - 1]
+            ynew = [y, y + 1, y]
+        elif h == 5:
+            xnew = [x, x, x - 1]
+            ynew = [y + 1, y + 1, y]
+        elif h == 6:
+            xnew = [x, x, x]
+            ynew = [y + 1, y + 1, y + 1]
+        elif h == 7:
+            xnew = [x, x + 1, x]
+            ynew = [y + 1, y, y + 1]
+        elif h == 8:
+            xnew = [x + 1, x + 1, x]
+            ynew = [y, y, y + 1]
+        elif h == 9:
+            xnew = [x + 1, x + 1, x + 1]
+            ynew = [y, y, y]
+        elif h == 10:
+            xnew = [x + 1, x, x + 1]
+            ynew = [y, y - 1, y]
+        elif h == 11:
+            xnew = [x, x, x + 1]
+            ynew = [y - 1, y - 1, y]
+    xnew = xnew + (xnew < 0) - (xnew > 5)
+    ynew = ynew + (ynew < 0) - (ynew > 5)
+    if sprime[1] == xnew[1] and sprime[2] == ynew[1] and sprime[3] == hnew[1]:
+        sasprime = sasprime + p[1]
+    if sprime[1] == xnew[2] and sprime[2] == ynew[2] and sprime[3] == hnew[2]:
+        sasprime = sasprime + p[2]
+    if sprime[1] == xnew[3] and sprime[2] == ynew[3] and sprime[3] == hnew[3]:
+        sasprime = sasprime + p[3]
+    return sasprime
+
+
+def valueiteration(lamb, pe):
+    vold = np.zeros((6, 6, 12))
+    check = True
+    policy = strings(6, 6, 12)
+    while check:
+        policy = strings(6, 6, 12)
+        for i in range(6):
+            for j in range(6):
+                for k in range(12):
+                    c = - 10 ^ 10
+                    a = ["FL", "F", "FR", "BL", "B", "BR"]
+                    for d in range(len(a)):
+                        b = 0
+                        for l in range(6):
+                            for m in range(6):
+                                for n in range(12):
+                                    b = b + transprobb(pe, [i, j, k], a, [l, m, n]) * (
+                                            reward([i, j, k]) + lamb * vold[l + 1, m + 1, n + 1])
+                        if b > c:
+                            c = b
+                            vnew[i + 1, j + 1, k + 1] = c
+                            policy[i + 1, j + 1, k + 1] = a
+                        if np.sum([i, j] == [3, 4]) == 2:
+                            vnew[i + 1, j + 1, k + 1] = transprobb(pe, [i, j, k], "N", [i, j, k]) * (
+                                    reward([i, j, k]) + lamb * vold[i + 1, j + 1, k + 1])
+                            policy[i + 1, j + 1, k + 1] = "N"
+
+        if np.sum(np.sum(np.sum(abs(vold - vnew) < 0.0001))) == 432:
+            check = False
+            pistar = policy
+            vstar = vnew
+        vold = vnew
+    return pistar, vstar
+
+
+def valueiteration(lamb, pe):
+    vold = np.zeros((6, 6, 12))
+    vnew = np.zeros((6, 6, 12))
+    check = True
+    policy = strings(6, 6, 12)
+    while check:
+        policy = strings(6, 6, 12)
+        for i in range(6):
+            for j in range(6):
+                for k in range(12):
+                    c = -10 ^ 100
+                    a = ["FL", "F", "FR", "BL", "B", "BR"]
+                    for d in range(len(a)):
+                        b = 0
+                    for l in range(6):
+                        for m in range(6):
+                            for n in range(12):
+                                b = b + transprobb(pe, [i, j, k], a, [l, m, n]) * (
+                                        reward([i, j, k]) + lamb * vold[l + 1, m + 1, n + 1])
+                    if b > c:
+                        c = b
+                    vnew[i + 1, j + 1, k + 1] = c
+                    policy[i + 1, j + 1, k + 1] = a
+                    if np.sum([i, j] == [3, 4]) == 2:
+                        vnew[i + 1, j + 1, k + 1] = transprobb(pe, [i, j, k], "N", [i, j, k]) * (
+                                reward([i, j, k]) + lamb * vold[i + 1, j + 1, k + 1])
+                        policy[i + 1, j + 1, k + 1] = "N"
+    if np.sum(np.sum(np.sum(abs(vold - vnew) < 0.0001))) == 432:
+        check = False
+    pistar = policy
+    vstar = vnew
+    vold = vnew
+    return pistar
+
+
+def policyeval(pi, lamb, pe):
+    values = np.zeros((6, 6, 12))
+    oldvalues = values + 1
+    while np.sum(np.sum(np.sum(abs((oldvalues - values) < 0.0001)))):
+        oldvalues = values
+        values = np.zeros((6, 6, 12))
+        for i in range(6):
+            for j in range(6):
+                for k in range(12):
+                    for l in range(6):
+                        for m in range(6):
+                            for n in range(12):
+                                values[i + 1, j + 1, k + 1] = values[i + 1, j + 1, k + 1] + transprobb(pe, [i, j, k],
+                                                                                                       pi[
+                                                                                                           i + 1, j + 1, k + 1]) * (
+                                                                      reward([i + 1, j + 1, k + 1]) + lamb *
+                                                                      oldvalues[l + 1, m + 1, n + 1])
+    return values
+
+
+def nexts(pe, s, a):
+    b = random.random()
+    for i in range(6):
+        for j in range(6):
+            for k in range(12):
+                b = b - transprobb(pe, s, a, [i, j, k])
+                if b <= 0:
+                    sprime = [i, j, k]
+                    b = b + 100
+    return sprime
+
+
+def nextpi3(currenteval, pe):
+    pi = strings(6, 6, 12)
+    pivalues = np.zeros((6, 6, 12))
+    pivalues = pivalues - 10 ^ 100
+    for i in range(6):
+        for j in range(6):
+            for k in range(12):
+                a = ["FL", "F", "FR", "BL", "B", "BR"]
+                for d in range(len(a)):
+                    b = 0
+                    for l in range(6):
+                        for m in range(6):
+                            for n in range(12):
+                                b = b + transprobb(pe, [i, j, k], a, [l, m, n]) * currenteval[l + 1, m + 1, n + 1]
+                    if pivalues(i + 1, j + 1, k + 1) < b:
+                        pivalues[i + 1, j + 1, k + 1] = b
+                        pi[i + 1, j + 1, k + 1] = a
+    for c in range(6, 9):
+        pi[4, 5, c] = "N"
+    return pi
+
+
+def pinot():
+    for i in range(6):
+        for j in range(6):
+            for k in range(12):
+                astars[i + 1, j + 1, k + 1] = initpolii([i, j, k])
+    return astars
+
+
+def policyiteration(pinot, lamb, pe):
+    pi = pinot
+    loop = True
+    while loop:
+        currenteval = policyeval(pi, lamb, pe)
+        pinew = nextpi3(currenteval, pe)
+        if np.sum(np.sum(np.sum(pinew == pi))) == 432:
+            loop = False
+        pi = pinew
+    pioptimal = pi
+    return pioptimal
+
+def gentraj(pi, s0, pe):
+    trajectory = s0
+    s = s0
+    while ne(((abs(s[1] - 3) + math.abs(s[2] - 4)),0)):
+        x = s[1]
+        y = s[2]
+        h = s[3]
+        action = pi[x + 1, y + 1, h + 1]
+        s = nexts(pe, s, action)
+        trajectory = cat(1, trajectory, s)
+    length = size(trajectory, 1)
+    fig = plt.figure()
+    ax = fig. add_subplot(111, projection = '3d')
+    d =trajectory[:, 1]
+    e =trajectory[:, 2]
+    f =trajectory[:, 3]
+    ax.plot_wireframe(d, e, f,'-b')
+    plt.show()
+    return trajectory
+
+
+def plot3(a, b, mark = "o", col ="r"):
+    pylab.ion()
+    fig=pylab.figure()
+    ax=Axes3D(fig)
+    ax.scatter(a,b, c, marker = mark, color =col)
+    return
+
+def nextpi2(currenteval, pe):
+    pivalues = np.zeros((6, 6, 12))
+    pivalues = pivalues - 10 ^ 100
+    for i in range(6):
+        for j in range(6):
+            for k in range(12):
+                a = ["FL", "F", "FR", "BL", "B", "BR"]
+                for d in range(len(a)):
+                    b = 0
+                    for l in range(6):
+                        for m in range(6):
+                            for n in range(12):
+                                b = b + transprobb(pe, [i, j, k], a, [l, m, n]) * currenteval[l + 1, m + 1, n + 1]
+                    if pivalues[i + 1, j + 1, k + 1] < b:
+                        pivalues[i + 1, j + 1, k + 1] = b
+                        pi[i + 1, j + 1, k + 1] = a
+    pi[4, 5, :] = "N"
+    return pi
+
